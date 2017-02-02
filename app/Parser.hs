@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Parser (parseRaw, parseKeymaps) where
+module Parser (parseAgdaInput, parseTex, parseTrie) where
 
 import Types
 
@@ -8,66 +8,157 @@ import Control.Monad (void)
 import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.Attoparsec.Text
+import qualified Data.Attoparsec.Text as Atto
 import Data.Either (lefts, rights)
 import Data.HashMap.Lazy (HashMap)
 import qualified Data.HashMap.Lazy as HashMap
+import Data.Monoid ((<>))
 
-parseRaw :: String -> Maybe [Keymap]
-parseRaw raw =
-    case parseOnly (parsePair `sepBy1` skipGarbage) (Text.pack raw) of
-        Left err -> Nothing
-        Right val -> Just val
+--------------------------------------------------------------------------------
+-- latin-ltx.el
+--------------------------------------------------------------------------------
+
+parseTex :: Parser [Translation]
+parseTex = parseTexTranslation `sepBy1` skipGarbage
+
+parseTexCode :: Parser Text
+parseTexCode = do
+    char '\"'
+    result <- ingoreEscaped
+    char '\"'
+    return result
+    where
+        ingoreEscaped :: Parser Text
+        ingoreEscaped = do
+            next <- peekChar
+            case next of
+                Nothing -> return ""
+                Just peeked -> case peeked of
+                    '\"' -> return "" -- ends everything
+                    '\\' -> do -- escape the next
+                        char '\\'
+                        escaped <- Atto.take 1
+                        rest <- ingoreEscaped
+                        return $ Text.singleton peeked <> escaped <> rest
+                    others -> do
+                        _ <- anyChar
+                        rest <- ingoreEscaped
+                        return $ Text.singleton others <> rest
+
+parseTexGlyph :: Parser Text
+parseTexGlyph = do
+    glyph <- Atto.take 1
+    if Text.unpack glyph == "\\"
+        then do
+            escaped <- Atto.take 1
+            return $ glyph <> escaped
+        else
+            return glyph
 
 
-parseFolge :: Parser Text
-parseFolge = do
+parseTexTranslation :: Parser Translation
+parseTexTranslation = do
+    char '('
+    code <- Text.unpack <$> parseTexCode
+    skipSpaces
+    char '?'
+    glyph <- parseTexGlyph
+    char ')'
+    return $ Translation code [glyph]
+
+
+--------------------------------------------------------------------------------
+-- agda-input.el
+--------------------------------------------------------------------------------
+
+parseAgdaInput :: Parser [Translation]
+parseAgdaInput = parseTranslation `sepBy1` skipGarbage
+
+parseTranslation :: Parser Translation
+parseTranslation = do
+    char '('
+    skipSpaces
+    code <- fmap Text.unpack parseCode
+    skipSpaces
+    char '.'
+    skipSpaces
+    many' (char ',')
+    char '('
+    glyphs <- parseGlyphs
+    char ')'
+    char ')'
+    return $ Translation code glyphs
+
+
+parseCode :: Parser Text
+parseCode = do
     char '\"'
     result <- takeTill ((==) '\"')
     char '\"'
     return result
 
-parseCorrespondence :: Parser [Text]
-parseCorrespondence = do
+parseGlyphs :: Parser [Text]
+parseGlyphs = do
     skipSpaces
-    fmap concat $ sepBy (choice [
-            parseGlyphs
+    fmap concat $ sepBy (choice
+        [   do
+                char '\"'
+                result <- takeTill ((==) '\"')
+                char '\"'
+                return (Text.words result >>= Text.group)
         ,   do
                 string "agda-input-to-string-list"
                 return []
 
         ]) skipSpaces
 
-parseGlyphs :: Parser [Text]
-parseGlyphs = do
-    char '\"'
-    result <- takeTill ((==) '\"')
-    char '\"'
-    return (Text.words result >>= Text.group)
+--------------------------------------------------------------------------------
+-- Trie
+--------------------------------------------------------------------------------
 
-parsePair :: Parser Keymap
+parseTrie :: Parser Trie
+parseTrie = do
+    string "export default " <?> "header: export default "
+    trie <- parseObject
+    choice [string ";\n", string ";"]
+    return trie
+    -- where
+parseCandidates :: Parser [Text]
+parseCandidates = do
+    string "["
+    candidates <- parseCode `sepBy` char ','
+    string "]"
+    return candidates
+
+parsePair :: Parser (Either [Text] (Text, Trie))
 parsePair = do
-    char '('
-    skipSpaces
-    folge <- fmap Text.unpack parseFolge
-    skipSpaces
-    char '.'
-    skipSpaces
-    many' (char ',')
-    char '('
-    glyphs <- parseCorrespondence
-    char ')'
-    char ')'
-    return $ Keymap folge glyphs
+    key <- parseCode
+    string ":"
+    if key == ">>"
+        then Left <$> parseCandidates
+        else do
+            trie <- parseObject
+            return $ Right (key, trie)
+
+parseObject :: Parser Trie
+parseObject = do
+    string "{"
+    pairs <- parsePair `sepBy1` char ','
+    p <- peekChar
+    string "}"
+    return $ Node (HashMap.fromList (rights pairs)) (concat $ lefts pairs)
+    where
+
+--------------------------------------------------------------------------------
+-- Helpers
+--------------------------------------------------------------------------------
 
 skipSpaces :: Parser ()
 skipSpaces = skipWhile (== ' ')
 
-isSpace :: Char -> Bool
-isSpace c = c == ' '
-
 skipComment :: Parser ()
 skipComment = do
-    string ";;"
+    choice [string ";;", string ";"]
     skipWhile (\c -> c /= '\n')
     char '\n'
     return ()
@@ -76,59 +167,6 @@ skipGarbage :: Parser [()]
 skipGarbage = many' $ choice [
         skipComment,
         void $ char '\n',
+        void $ char '\t',
         void $ many1 (char ' ')
     ]
-
-parseKeymaps :: Parser Trie
-parseKeymaps = do
-    string "export default " <?> "header: export default "
-    trie <- parseTrie
-    choice [string ";\n", string ";"] <?> "ending"
-    return trie
-    -- where
-parseCandidates :: Parser [Text]
-parseCandidates = do
-    string "[" <?> "["
-    candidates <- parseFolge `sepBy` char ','
-    string "]" <?> "]"
-    return candidates
-
-parseKV :: Parser (Either [Text] (Text, Trie))
-parseKV = do
-    key <- parseFolge
-    string ":" <?> ":"
-    if key == ">>"
-        then Left <$> parseCandidates
-        else do
-            trie <- parseTrie
-            return $ Right (key, trie)
-
-parseTrie :: Parser Trie
-parseTrie = do
-    string "{" <?> "{"
-    pairs <- parseKV `sepBy1` char ','
-    p <- peekChar
-    string "}" <?> show p
-    return $ Node (HashMap.fromList (rights pairs)) (concat $ lefts pairs)
-    where
-
-a :: Text
-a = "export default {\">>\":[],\"L\":{\">>\":[],\"u\":{\">>\":[],\"b\":{\">>\":[\"⨆\"]}}}};"
-
-b :: Text
--- b = "{\">>\":[\"!\",\"$\"]}"
-b = "{\">>\":[],\"L\":{\">>\":[],\"u\":{\">>\":[],\"b\":{\">>\":[\"⨆\"]}}}}"
-
-c :: Text
-c = "[\"!\",\"$\"]"
-
-d :: Text
-d = "[]"
-
-p = parseTest parseTrie
-r = parseTest parseKeymaps
-
-q :: IO ()
-q = do
-    raw <- readFile "assets/short.ts"
-    parseTest parseKeymaps (Text.pack raw)

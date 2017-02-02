@@ -15,56 +15,76 @@ import Data.Aeson
 import Data.Monoid ((<>))
 import Data.Attoparsec.Text
 
-
 main :: IO ()
 main = do
-    -- old <- legacyTrie
-    -- new <- currentTrie
-    --
-    -- let o = Set.fromList $ elems old
-    -- let n = Set.fromList $ elems new
-    -- mapM_ (putStrLn . Text.unpack) (Set.difference o n)
+    -- agdaInput <- readAndParse parseAgdaInput "agda-input"
+    -- print (length agdaInput)
+
+    tex <- readAndParse parseTex "latin-ltx"
+    print (length tex)
+    -- mapM_ print (tex)
+
+    -- test parseTex "latin-ltx"
+
+readAndParse :: Parser [Translation] -> String -> IO [Translation]
+readAndParse parser path = do
+    raw <- readFile $ "assets/" <> path <> ".el"
+    case parseOnly parser (Text.pack raw) of
+        Left err -> do
+            print err
+            return []
+        Right val ->
+            return val
+
+test :: Parser [Translation] -> String -> IO ()
+test parser path = do
+    raw <- readFile $ "assets/" <> path <> ".el"
+    parseTest parser (Text.pack raw)
+    return ()
 
 
-    raw <- readFile "assets/extracted.el"
-    case parseRaw raw of
-        Just keymaps -> BS.writeFile "assets/result-mempty.ts" (serialize $ growTrie keymaps)
-        Nothing -> print "parse error"
+--------------------------------------------------------------------------------
+-- Trie
+--------------------------------------------------------------------------------
 
-growTrie :: [Keymap] -> Trie
+growTrie :: [Translation] -> Trie
 growTrie = foldr insert emptyTrie
-
-insert :: Keymap -> Trie -> Trie
-insert (Keymap [] glyphs) (Node sub candidates) = Node sub (candidates ++ glyphs)
-insert (Keymap (x:xs) glyphs) (Node sub candidates) = Node sub' candidates
     where
-        sub' :: HashMap Text Trie
-        sub' = case HashMap.lookup (Text.singleton x) sub of
-            Just trie -> HashMap.insert (Text.singleton x) (insert (Keymap xs glyphs) trie) sub
-            Nothing -> HashMap.insert (Text.singleton x) (insert (Keymap xs glyphs) emptyTrie) sub
+        insert :: Translation -> Trie -> Trie
+        insert (Translation [] glyphs) (Node entries candidates) = Node entries (candidates ++ glyphs)
+        insert (Translation (x:xs) glyphs) (Node entries candidates) = Node entries' candidates
+            where
+                entries' :: HashMap Text Trie
+                entries' = case HashMap.lookup (Text.singleton x) entries of
+                    Just trie -> HashMap.insert (Text.singleton x) (insert (Translation xs glyphs) trie) entries
+                    Nothing -> HashMap.insert (Text.singleton x) (insert (Translation xs glyphs) emptyTrie) entries
 
-emptyTrie :: Trie
-emptyTrie = Node HashMap.empty []
+        emptyTrie :: Trie
+        emptyTrie = Node HashMap.empty []
 
 serialize :: Trie -> ByteString
 serialize trie = "export default " <> encode trie <> ";"
 
-legacyTrie :: IO Trie
-legacyTrie = do
+cardinality :: Trie -> Int
+cardinality (Node entries candidates) = length candidates + sum (map cardinality (HashMap.elems entries))
+
+elems :: Trie -> [Text]
+elems (Node entries candidates) = candidates ++ (HashMap.elems entries >>= elems)
+
+--------------------------------------------------------------------------------
+-- Trie
+--------------------------------------------------------------------------------
+
+fetchLegacyTrie :: IO Trie
+fetchLegacyTrie = do
     raw <- BS.init . BS.init . BS.drop 15 <$> (BS.readFile "assets/legacy.ts")
     case (decode raw :: Maybe Trie) of
         Nothing -> error "failed"
         Just trie -> return trie
 
-currentTrie :: IO Trie
-currentTrie = do
-    raw <- BS.init . BS.drop 15 <$> (BS.readFile "assets/result.ts")
-    case (decode raw :: Maybe Trie) of
-        Nothing -> error "failed"
-        Just trie -> return trie
-
-cardinality :: Trie -> Int
-cardinality (Node entries glyphs) = length glyphs + sum (map cardinality (HashMap.elems entries))
-
-elems :: Trie -> [Text]
-elems (Node entries glyphs) = glyphs ++ (HashMap.elems entries >>= elems)
+-- fetchLegacyTrie :: IO Trie
+-- currentTrie = do
+--     raw <- BS.init . BS.drop 15 <$> (BS.readFile "assets/result.ts")
+--     case (decode raw :: Maybe Trie) of
+--         Nothing -> error "failed"
+--         Just trie -> return trie

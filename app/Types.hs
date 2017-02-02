@@ -12,31 +12,44 @@ import Data.Aeson.Types (Parser)
 import Data.Monoid
 import GHC.Generics
 
-data Keymap = Keymap String [Text]
+--------------------------------------------------------------------------------
+-- Translation
+--------------------------------------------------------------------------------
 
-instance Show Keymap where
-    show (Keymap folge glyphs) = "Keymap " ++ folge ++ " ["
+data Translation = Translation
+    String  -- code
+    [Text]  -- glyphs
+
+instance Show Translation where
+    show (Translation code glyphs) = "Translation " ++ code ++ " ["
         ++ Text.unpack (Text.intercalate (Text.singleton ' ') glyphs) ++ "]"
 
-data Trie = Node (HashMap Text Trie) [Text]
-      deriving (Show, Generic)
+--------------------------------------------------------------------------------
+-- Trie
+--------------------------------------------------------------------------------
+
+data Trie = Node
+    (HashMap Text Trie) -- entries
+    [Text]              -- candidates
+    deriving (Show, Generic)
 
 instance ToJSON Trie where
-    toEncoding (Node sub candidates) = pairs (glyphs <> entries)
+    toEncoding (Node entries candidates) = pairs (candidates' <> entries')
         where
-            glyphs = case null candidates of
+            candidates' = case null candidates of
                 True -> mempty
                 False -> ">>" .= candidates
-            entries = mconcat $ map (uncurry (.=)) (HashMap.toList sub)
+            entries' = mconcat $ map (uncurry (.=)) (HashMap.toList entries)
 
 instance FromJSON Trie where
     parseJSON (Object obj) = Node
-        <$> parseEntries
+        <$> entries
         <*> candidates
         where
+            candidates :: Parser [Text]
             candidates = case HashMap.lookup ">>" obj of
                 Nothing -> return []
                 Just array -> parseJSON array
 
-            parseEntries :: Parser (HashMap Text Trie)
-            parseEntries = sequence $ HashMap.map parseJSON (HashMap.delete ">>" obj)
+            entries :: Parser (HashMap Text Trie)
+            entries = sequence $ HashMap.map parseJSON (HashMap.delete ">>" obj)
