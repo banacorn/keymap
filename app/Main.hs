@@ -7,24 +7,29 @@ import Data.HashSet (HashSet)
 import qualified Data.HashSet as Set
 import Data.HashMap.Lazy (HashMap)
 import qualified Data.HashMap.Lazy as HashMap
+import Data.HashSet (HashSet)
+import qualified Data.HashSet as HashSet
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BS
 import Data.Text (Text)
 import qualified Data.Text as Text
+import Data.List (notElem)
 import Data.Aeson
 import Data.Monoid ((<>))
 import Data.Attoparsec.Text
 
+exclusions :: [String]
+exclusions = ["geq", "leq", "bullet", "qed", "par", "newline"]
+
 main :: IO ()
 main = do
-    -- agdaInput <- readAndParse parseAgdaInput "agda-input"
-    -- print (length agdaInput)
-
+    agdaInput <- readAndParse parseAgdaInput "agda-input"
     tex <- readAndParse parseTex "latin-ltx"
-    print (length tex)
-    -- mapM_ print (tex)
 
-    -- test parseTex "latin-ltx"
+
+    let filtered = filter (\(Translation code _) -> notElem code exclusions) (agdaInput ++ tex)
+    let trie = growTrie filtered
+    BS.writeFile "assets/keymap.ts" (serialize trie)
 
 readAndParse :: Parser [Translation] -> String -> IO [Translation]
 readAndParse parser path = do
@@ -43,6 +48,7 @@ test parser path = do
     return ()
 
 
+
 --------------------------------------------------------------------------------
 -- Trie
 --------------------------------------------------------------------------------
@@ -51,7 +57,7 @@ growTrie :: [Translation] -> Trie
 growTrie = foldr insert emptyTrie
     where
         insert :: Translation -> Trie -> Trie
-        insert (Translation [] glyphs) (Node entries candidates) = Node entries (candidates ++ glyphs)
+        insert (Translation [] glyphs) (Node entries candidates) = Node entries (foldr HashSet.insert candidates glyphs)
         insert (Translation (x:xs) glyphs) (Node entries candidates) = Node entries' candidates
             where
                 entries' :: HashMap Text Trie
@@ -60,7 +66,7 @@ growTrie = foldr insert emptyTrie
                     Nothing -> HashMap.insert (Text.singleton x) (insert (Translation xs glyphs) emptyTrie) entries
 
         emptyTrie :: Trie
-        emptyTrie = Node HashMap.empty []
+        emptyTrie = Node HashMap.empty HashSet.empty
 
 serialize :: Trie -> ByteString
 serialize trie = "export default " <> encode trie <> ";"
@@ -68,8 +74,8 @@ serialize trie = "export default " <> encode trie <> ";"
 cardinality :: Trie -> Int
 cardinality (Node entries candidates) = length candidates + sum (map cardinality (HashMap.elems entries))
 
-elems :: Trie -> [Text]
-elems (Node entries candidates) = candidates ++ (HashMap.elems entries >>= elems)
+elems :: Trie -> HashSet Text
+elems (Node entries candidates) = HashSet.unions (candidates : map elems (HashMap.elems entries))
 
 --------------------------------------------------------------------------------
 -- Trie

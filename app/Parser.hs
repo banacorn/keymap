@@ -12,6 +12,8 @@ import qualified Data.Attoparsec.Text as Atto
 import Data.Either (lefts, rights)
 import Data.HashMap.Lazy (HashMap)
 import qualified Data.HashMap.Lazy as HashMap
+import Data.HashSet (HashSet)
+import qualified Data.HashSet as HashSet
 import Data.Monoid ((<>))
 
 --------------------------------------------------------------------------------
@@ -24,9 +26,14 @@ parseTex = parseTexTranslation `sepBy1` skipGarbage
 parseTexCode :: Parser Text
 parseTexCode = do
     char '\"'
-    result <- ingoreEscaped
+    result <- choice
+        [   do
+                string "\\\\"
+                ingoreEscaped
+        ,   ingoreEscaped
+        ]
     char '\"'
-    return result
+    return $ removeSurroundingMoneySign result
     where
         ingoreEscaped :: Parser Text
         ingoreEscaped = do
@@ -39,11 +46,18 @@ parseTexCode = do
                         char '\\'
                         escaped <- Atto.take 1
                         rest <- ingoreEscaped
-                        return $ Text.singleton peeked <> escaped <> rest
+                        return $ escaped <> rest
                     others -> do
                         _ <- anyChar
                         rest <- ingoreEscaped
                         return $ Text.singleton others <> rest
+        removeSurroundingMoneySign :: Text -> Text
+        removeSurroundingMoneySign raw = if (Text.head raw == '$' && Text.last raw == '$')
+            then let trimmed = Text.init (Text.tail raw) in
+                if (Text.head trimmed == '\\')
+                    then Text.tail trimmed
+                    else trimmed
+            else raw
 
 parseTexGlyph :: Parser Text
 parseTexGlyph = do
@@ -51,7 +65,7 @@ parseTexGlyph = do
     if Text.unpack glyph == "\\"
         then do
             escaped <- Atto.take 1
-            return $ glyph <> escaped
+            return escaped
         else
             return glyph
 
@@ -146,7 +160,9 @@ parseObject = do
     pairs <- parsePair `sepBy1` char ','
     p <- peekChar
     string "}"
-    return $ Node (HashMap.fromList (rights pairs)) (concat $ lefts pairs)
+    return $ Node
+        (HashMap.fromList (rights pairs))
+        (HashSet.fromList (concat $ lefts pairs))
     where
 
 --------------------------------------------------------------------------------
