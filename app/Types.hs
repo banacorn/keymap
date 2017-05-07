@@ -32,7 +32,7 @@ instance Show Translation where
 
 data Trie = Node
     (HashMap Text Trie) -- entries
-    (HashSet Text)      -- candidates
+    [Text]              -- candidates
     deriving (Show, Generic)
 
 instance ToJSON Trie where
@@ -48,9 +48,9 @@ instance FromJSON Trie where
         <$> entries
         <*> candidates
         where
-            candidates :: Parser (HashSet Text)
+            candidates :: Parser [Text]
             candidates = case HashMap.lookup ">>" obj of
-                Nothing -> return HashSet.empty
+                Nothing -> return []
                 Just array -> parseJSON array
 
             entries :: Parser (HashMap Text Trie)

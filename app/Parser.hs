@@ -12,8 +12,8 @@ import qualified Data.Attoparsec.Text as Atto
 import Data.Either (lefts, rights)
 import Data.HashMap.Lazy (HashMap)
 import qualified Data.HashMap.Lazy as HashMap
-import Data.HashSet (HashSet)
-import qualified Data.HashSet as HashSet
+-- import Data.HashSet (HashSet)
+-- import qualified Data.HashSet as HashSet
 import Data.Monoid ((<>))
 
 --------------------------------------------------------------------------------
@@ -162,7 +162,7 @@ parseObject = do
     string "}"
     return $ Node
         (HashMap.fromList (rights pairs))
-        (HashSet.fromList (concat $ lefts pairs))
+        (concat $ lefts pairs)
     where
 
 --------------------------------------------------------------------------------
