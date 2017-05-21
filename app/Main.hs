@@ -3,12 +3,8 @@ module Main where
 
 import Types
 import Parser
--- import Data.HashSet (HashSet)
--- import qualified Data.HashSet as Set
 import Data.HashMap.Lazy (HashMap)
 import qualified Data.HashMap.Lazy as HashMap
--- import Data.HashSet (HashSet)
--- import qualified Data.HashSet as HashSet
 import Data.ByteString.Lazy (ByteString)
 import qualified Data.ByteString.Lazy as BS
 import Data.Text (Text)
@@ -17,11 +13,6 @@ import Data.List (notElem, nub)
 import Data.Aeson
 import Data.Monoid ((<>))
 import Data.Attoparsec.Text
-
--- exclusions :: [String]
--- exclusions = ["geq", "leq", "bullet", "qed", "par", "newline"]
--- exclusions = ["geq"]
--- exclusions = ["newline"]
 
 sanitizeGlyph :: Translation -> Translation
 sanitizeGlyph (Translation code glyphs)
@@ -37,18 +28,12 @@ sanitizeGlyph (Translation code glyphs)
 
 main :: IO ()
 main = do
+    -- keymaps drawn from two different sources
     agdaInput <- readAndParse parseAgdaInput "agda-input"
     tex <- readAndParse parseTex "latin-ltx"
 
-    let Translation _ newline = head (filter (\(Translation code _) -> elem code ["leq"]) (agdaInput ++ tex))
-    -- mapM  newline
-
-    -- let filtered = filter (\(Translation code _) -> notElem code exclusions)
     let sanitaized = map sanitizeGlyph (agdaInput ++ tex)
     let trie = growTrie sanitaized
-
-    -- let filtered = filter (\(Translation code _) -> notElem code exclusions) (agdaInput ++ tex)
-    -- let trie = growTrie filtered
     BS.writeFile "assets/keymap.ts" (serialize trie)
 
 readAndParse :: Parser [Translation] -> String -> IO [Translation]
@@ -67,8 +52,6 @@ test parser path = do
     parseTest parser (Text.pack raw)
     return ()
 
-
-
 --------------------------------------------------------------------------------
 -- Trie
 --------------------------------------------------------------------------------
@@ -77,7 +60,7 @@ growTrie :: [Translation] -> Trie
 growTrie = foldr insert emptyTrie
     where
         insert :: Translation -> Trie -> Trie
-        insert (Translation [] glyphs) (Node entries candidates) = Node entries (nub (candidates ++ glyphs))
+        insert (Translation [] glyphs) (Node entries candidates) = Node entries (nub (glyphs ++ candidates))
         insert (Translation (x:xs) glyphs) (Node entries candidates) = Node entries' candidates
             where
                 entries' :: HashMap Text Trie
@@ -107,10 +90,3 @@ fetchLegacyTrie = do
     case (decode raw :: Maybe Trie) of
         Nothing -> error "failed"
         Just trie -> return trie
-
--- fetchLegacyTrie :: IO Trie
--- currentTrie = do
---     raw <- BS.init . BS.drop 15 <$> (BS.readFile "assets/result.ts")
---     case (decode raw :: Maybe Trie) of
---         Nothing -> error "failed"
---         Just trie -> return trie
