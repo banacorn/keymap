@@ -1,19 +1,19 @@
-name:                Folge
+name:                keymap
 version:             0.1.0.0
-synopsis:            Initial project template from stack
+synopsis:            Keymap generator for agda-mode
 description:         Please see README.md
-homepage:            https://github.com/githubuser/Folge#readme
-license:             BSD3
+homepage:            https://github.com/banacorn/keymap#readme
+license:             MIT
 license-file:        LICENSE
-author:              Author name here
-maintainer:          example@example.com
-copyright:           2017 Author name here
-category:            Web
+author:              LUĀ Tîng-Giān
+maintainer:          banacorn@gmail.com
+copyright:           2017 LUĀ Tîng-Giān
+category:            Tool
 build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
 
-executable folge
+executable keymap
     hs-source-dirs:     app
     main-is:            Main.hs
     ghc-options:        -threaded -rtsopts -with-rtsopts=-N
@@ -27,4 +27,4 @@ executable folge
 
 source-repository head
     type:     git
-    location: https://github.com/githubuser/Folge
+    location: https://github.com/banacorn/keymap#readme
