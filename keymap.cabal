@@ -21,6 +21,7 @@ executable keymap
                         text,
                         bytestring,
                         attoparsec,
+                        containers,
                         unordered-containers,
                         aeson
     default-language:   Haskell2010

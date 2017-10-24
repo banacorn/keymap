@@ -3,6 +3,8 @@ module Main where
 
 import Types
 import Parser
+import Data.IntMap.Lazy (IntMap)
+import qualified Data.IntMap.Lazy as IntMap
 import Data.HashMap.Lazy (HashMap)
 import qualified Data.HashMap.Lazy as HashMap
 import Data.ByteString.Lazy (ByteString)
@@ -11,6 +13,7 @@ import Data.Text (Text)
 import qualified Data.Text as Text
 import Data.List (notElem, nub)
 import Data.Aeson
+import Data.Aeson.Types (Pair)
 import Data.Monoid ((<>))
 import Data.Attoparsec.Text
 
@@ -34,7 +37,10 @@ main = do
 
     let sanitaized = map sanitizeGlyph (agdaInput ++ tex)
     let trie = growTrie sanitaized
+    let lookupTable = growLookupTable sanitaized
+
     BS.writeFile "assets/keymap.ts" (serialize trie)
+    BS.writeFile "assets/query.ts" (serialize (toJSONLookupTable lookupTable))
 
 readAndParse :: Parser [Translation] -> String -> IO [Translation]
 readAndParse parser path = do
@@ -71,7 +77,7 @@ growTrie = foldr insert emptyTrie
         emptyTrie :: Trie
         emptyTrie = Node HashMap.empty []
 
-serialize :: Trie -> ByteString
+serialize :: ToJSON a => a -> ByteString
 serialize trie = "export default " <> encode trie <> ";"
 
 cardinality :: Trie -> Int
@@ -90,3 +96,25 @@ fetchLegacyTrie = do
     case (decode raw :: Maybe Trie) of
         Nothing -> error "failed"
         Just trie -> return trie
+
+--------------------------------------------------------------------------------
+-- Unicode => Input Sequence
+--------------------------------------------------------------------------------
+
+growLookupTable :: [Translation] -> LookupTable
+growLookupTable xs = foldr insert IntMap.empty $ xs >>= toEntries
+    where
+        insert :: Entry -> LookupTable -> LookupTable
+        insert (cp, codes) old = IntMap.insertWith (++) cp codes old
+
+        toEntries :: Translation -> [Entry]
+        toEntries (Translation code glyphs) = map (\g -> (toCodePoint g, [code])) glyphs
+
+        toCodePoint :: Text -> Int
+        toCodePoint x = head $ map fromEnum (Text.unpack x)
+
+toJSONLookupTable :: LookupTable -> Value
+toJSONLookupTable = object . map fromEntry . IntMap.toList
+    where
+        fromEntry :: Entry -> Pair
+        fromEntry (cp, codes) = (Text.pack (show cp), toJSON codes)

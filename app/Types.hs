@@ -5,6 +5,8 @@ module Types where
 
 import Data.Text (Text)
 import qualified Data.Text as Text
+import Data.IntMap.Lazy (IntMap)
+import qualified Data.IntMap.Lazy as IntMap
 import Data.HashMap.Lazy (HashMap)
 import qualified Data.HashMap.Lazy as HashMap
 import Data.HashSet (HashSet)
@@ -55,3 +57,10 @@ instance FromJSON Trie where
 
             entries :: Parser (HashMap Text Trie)
             entries = sequence $ HashMap.map parseJSON (HashMap.delete ">>" obj)
+
+--------------------------------------------------------------------------------
+-- Lousy lookup table from Unicode symbols (code points) to input sequences
+--------------------------------------------------------------------------------
+
+type LookupTable = IntMap [String]
+type Entry = (Int, [String])
