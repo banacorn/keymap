@@ -13,3 +13,5 @@ The mappings are currently drawn from two sources (in order):
 ## Output
 
 1. [keymap.ts](https://github.com/banacorn/keymap/blob/master/assets/keymap.ts): The generated keymap trie
+
+2. [query.ts](https://github.com/banacorn/keymap/blob/master/assets/query.ts):  The lookup table for input sequence
