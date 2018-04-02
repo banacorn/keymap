@@ -1,21 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main where
 
-import Types
-import Parser
-import Data.IntMap.Lazy (IntMap)
-import qualified Data.IntMap.Lazy as IntMap
-import Data.HashMap.Lazy (HashMap)
-import qualified Data.HashMap.Lazy as HashMap
-import Data.ByteString.Lazy (ByteString)
-import qualified Data.ByteString.Lazy as BS
-import Data.Text (Text)
-import qualified Data.Text as Text
-import Data.List (notElem, nub)
-import Data.Aeson
-import Data.Aeson.Types (Pair)
-import Data.Monoid ((<>))
-import Data.Attoparsec.Text
+import              Types
+import              Parser
+import              Data.IntMap.Lazy (IntMap)
+import qualified    Data.IntMap.Lazy as IntMap
+import              Data.HashMap.Lazy (HashMap)
+import qualified    Data.HashMap.Lazy as HashMap
+import              Data.ByteString.Lazy (ByteString)
+import qualified    Data.ByteString.Lazy as BS
+import              Data.Text (Text)
+import qualified    Data.Text as Text
+import              Data.List (notElem, nub)
+import              Data.Aeson
+import              Data.Aeson.Types (Pair)
+import              Data.Monoid ((<>))
+import              Data.Attoparsec.Text
 
 sanitizeGlyph :: Translation -> Translation
 sanitizeGlyph (Translation code glyphs)

@@ -4,15 +4,15 @@ module Parser (parseAgdaInput, parseTex, parseTrie) where
 
 import Types
 
-import Control.Monad (void)
-import Data.Text (Text)
-import qualified Data.Text as Text
-import Data.Attoparsec.Text
-import qualified Data.Attoparsec.Text as Atto
-import Data.Either (lefts, rights)
-import Data.HashMap.Lazy (HashMap)
-import qualified Data.HashMap.Lazy as HashMap
-import Data.Monoid ((<>))
+import              Control.Monad (void)
+import              Data.Text (Text)
+import qualified    Data.Text as Text
+import              Data.Attoparsec.Text
+import qualified    Data.Attoparsec.Text as Atto
+import              Data.Either (lefts, rights)
+import              Data.HashMap.Lazy (HashMap)
+import qualified    Data.HashMap.Lazy as HashMap
+import              Data.Monoid ((<>))
 
 --------------------------------------------------------------------------------
 -- latin-ltx.el
@@ -123,6 +123,10 @@ parseGlyphs = do
                 return []
 
         ]) skipSpaces
+
+--------------------------------------------------------------------------------
+-- extensions
+--------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
 -- Trie
