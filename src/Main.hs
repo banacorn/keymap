@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Generator where
+module Main where
 
 import              Types
 import              Parser

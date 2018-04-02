@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Explorer where
 --
-import              Generator (readAndParse, sanitizeGlyph, growTrie)
+import              Main (readAndParse, sanitizeGlyph, growTrie)
 import              Types
 import              Parser
 -- import              Data.IntMap.Lazy (IntMap)
