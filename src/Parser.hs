@@ -135,21 +135,21 @@ parseGlyphs = do
 parseTrie :: Parser Trie
 parseTrie = do
     string "export default " <?> "header: export default "
-    trie <- parseObject
-    choice [string ";\n", string ";"]
+    trie <- parseObject <?> "trie"
+    choice [string ";\n", string ";"] <?> "closing semicolon"
     return trie
     -- where
 parseCandidates :: Parser [Text]
 parseCandidates = do
-    string "["
-    candidates <- parseCode `sepBy` char ','
-    string "]"
+    string "[" <?> "opening parenthese of candidates"
+    candidates <- parseCode `sepBy` char ',' <?> "candidates"
+    string "]" <?> "closing parenthese of candidates"
     return candidates
 
 parsePair :: Parser (Either [Text] (Text, Trie))
 parsePair = do
     key <- parseCode
-    string ":"
+    string ":" <?> "semicolon of pair"
     if key == ">>"
         then Left <$> parseCandidates
         else do
@@ -158,10 +158,10 @@ parsePair = do
 
 parseObject :: Parser Trie
 parseObject = do
-    string "{"
-    pairs <- parsePair `sepBy1` char ','
-    p <- peekChar
-    string "}"
+    string "{" <?> "opening brace of pairs"
+    pairs <- parsePair `sepBy1` char ',' <?> "pairs"
+    string "}" <?> "closing brace of pairs"
+
     return $ Node
         (HashMap.fromList (rights pairs))
         (concat $ lefts pairs)

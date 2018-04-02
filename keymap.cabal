@@ -13,9 +13,9 @@ build-type:          Simple
 extra-source-files:  README.md
 cabal-version:       >=1.10
 
-executable keymap
-    hs-source-dirs:     app
-    main-is:            Main.hs
+executable generator
+    hs-source-dirs:     src
+    main-is:            Generator.hs
     ghc-options:        -threaded -rtsopts -with-rtsopts=-N
     build-depends:      base,
                         text,
@@ -23,7 +23,8 @@ executable keymap
                         attoparsec,
                         containers,
                         unordered-containers,
-                        aeson
+                        aeson,
+                        yaml
     default-language:   Haskell2010
 
 source-repository head
