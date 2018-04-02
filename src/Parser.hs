@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Parser (parseAgdaInput, parseTex, parseTrie) where
+module Parser (parseAgdaInput, parseTex, parseTrie, parseExtension) where
 
 import Types
 
@@ -123,11 +123,6 @@ parseGlyphs = do
                 return []
 
         ]) skipSpaces
-
---------------------------------------------------------------------------------
--- extensions
---------------------------------------------------------------------------------
-
 --------------------------------------------------------------------------------
 -- Trie
 --------------------------------------------------------------------------------
@@ -166,6 +161,22 @@ parseObject = do
         (HashMap.fromList (rights pairs))
         (concat $ lefts pairs)
     where
+
+--------------------------------------------------------------------------------
+-- Extensions
+--------------------------------------------------------------------------------
+
+parseExtension :: Parser [Translation]
+parseExtension = Atto.many' parseTranslation
+
+    where
+        parseTranslation :: Parser Translation
+        parseTranslation = do
+            code <- Text.unpack <$> takeTill (== ' ')
+            skipSpace
+            glyphs <- takeTill Atto.isEndOfLine
+            satisfy isEndOfLine
+            return $ Translation code (Text.groupBy (\_ _ -> False) glyphs)
 
 --------------------------------------------------------------------------------
 -- Helpers

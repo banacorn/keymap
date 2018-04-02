@@ -32,19 +32,21 @@ sanitizeGlyph (Translation code glyphs)
 main :: IO ()
 main = do
     -- keymaps drawn from two different sources
-    agdaInput <- readAndParse parseAgdaInput "agda-input"
-    tex <- readAndParse parseTex "latin-ltx"
+    agdaInput <- readAndParse parseAgdaInput "agda-input.el"
+    tex <- readAndParse parseTex "latin-ltx.el"
+    alphaNumeric <- readAndParse parseExtension "alpha-numeric.ext"
 
-    let sanitaized = map sanitizeGlyph (agdaInput ++ tex)
+    let sanitaized = map sanitizeGlyph (agdaInput ++ tex ++ alphaNumeric)
     let trie = growTrie sanitaized
     let lookupTable = growLookupTable sanitaized
 
     BS.writeFile "assets/keymap.ts" (serialize trie)
     BS.writeFile "assets/query.ts" (serialize (toJSONLookupTable lookupTable))
 
+-- reading ".el" files and parse them with the given parser
 readAndParse :: Parser [Translation] -> String -> IO [Translation]
 readAndParse parser path = do
-    raw <- readFile $ "assets/" <> path <> ".el"
+    raw <- readFile $ "assets/" <> path
     case parseOnly parser (Text.pack raw) of
         Left err -> do
             print err
