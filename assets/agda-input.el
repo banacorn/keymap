@@ -1,7 +1,7 @@
 ("eq"  . ,(agda-input-to-string-list "=∼∽≈≋∻∾∿≀≃⋍≂≅ ≌≊≡≣≐≑≒≓≔≕≖≗≘≙≚≛≜≝≞≟≍≎≏≬⋕"))
 ("eqn" . ,(agda-input-to-string-list "≠≁ ≉     ≄  ≇≆  ≢                 ≭    "))
 
-("=n"  . ("≠"))
+                ("=n"  . ("≠"))
 ("~"    . ("∼"))  ("~n"  . ("≁"))
 ("~~"   . ("≈"))  ("~~n" . ("≉"))
 ("~~~"  . ("≋"))
@@ -111,7 +111,7 @@
 ("*"         . ("⋆"))
 (".+"        . ("∔"))
 (".-"        . ("∸"))
-(":"         . ("∶"))
+(":"         . ,(agda-input-to-string-list "∶⦂ː꞉˸፥፦：﹕︓"))
 ("::"        . ("∷"))
 ("::-"       . ("∺"))
 ("-:"        . ("∹"))
@@ -211,10 +211,10 @@
 ("---" . ,(agda-input-to-string-list "─│┌┐└┘├┤┬┼┴╴╵╶╷╭╮╯╰╱╲╳"))
 ("--=" . ,(agda-input-to-string-list "═║╔╗╚╝╠╣╦╬╩     ╒╕╘╛╞╡╤╪╧ ╓╖╙╜╟╢╥╫╨"))
 ("--_" . ,(agda-input-to-string-list "━┃┏┓┗┛┣┫┳╋┻╸╹╺╻
-   ┍┯┑┕┷┙┝┿┥┎┰┒┖┸┚┠╂┨┞╀┦┟╁┧┢╈┪┡╇┩
-   ┮┭┶┵┾┽┲┱┺┹╊╉╆╅╄╃ ╿╽╼╾"))
+                                    ┍┯┑┕┷┙┝┿┥┎┰┒┖┸┚┠╂┨┞╀┦┟╁┧┢╈┪┡╇┩
+                                    ┮┭┶┵┾┽┲┱┺┹╊╉╆╅╄╃ ╿╽╼╾"))
 ("--." . ,(agda-input-to-string-list "╌╎┄┆┈┊
-   ╍╏┅┇┉┋"))
+                                    ╍╏┅┇┉┋"))
 
 ;; Triangles.
 
@@ -346,6 +346,19 @@
 ("b8"   . ("𝟠"))
 ("b9"   . ("𝟡"))
 
+;; Mathematical bold digits.
+
+("B0"   . ("𝟎"))
+("B1"   . ("𝟏"))
+("B2"   . ("𝟐"))
+("B3"   . ("𝟑"))
+("B4"   . ("𝟒"))
+("B5"   . ("𝟓"))
+("B6"   . ("𝟔"))
+("B7"   . ("𝟕"))
+("B8"   . ("𝟖"))
+("B9"   . ("𝟗"))
+
 ;; Parentheses.
 
 ("(" . ,(agda-input-to-string-list "([{⁅⁽₍〈⎴⟅⟦⟨⟪⦃〈《「『【〔〖〚︵︷︹︻︽︿﹁﹃﹙﹛﹝（［｛｢"))
@@ -366,8 +379,11 @@
 ("lbag" . ("⟅"))
 ("rbag" . ("⟆"))
 
-("(|" . ("⦇"))
+("(|" . ("⦇"))  ;; Idiom brackets
 ("|)" . ("⦈"))
+
+("((" . ("⦅"))  ;; Banana brackets
+("))" . ("⦆"))
 
 ;; Primes.
 
@@ -406,9 +422,9 @@
 ("tie"        . ("⁀"))
 ("undertie"   . ("‿"))
 ("apl"        . ,(agda-input-to-string-list "⌶⌷⌸⌹⌺⌻⌼⌽⌾⌿⍀⍁⍂⍃⍄⍅⍆⍇⍈
-          ⍉⍊⍋⍌⍍⍎⍏⍐⍑⍒⍓⍔⍕⍖⍗⍘⍙⍚⍛
-          ⍜⍝⍞⍟⍠⍡⍢⍣⍤⍥⍦⍧⍨⍩⍪⍫⍬⍭⍮
-          ⍯⍰⍱⍲⍳⍴⍵⍶⍷⍸⍹⍺⎕"))
+                                           ⍉⍊⍋⍌⍍⍎⍏⍐⍑⍒⍓⍔⍕⍖⍗⍘⍙⍚⍛
+                                           ⍜⍝⍞⍟⍠⍡⍢⍣⍤⍥⍦⍧⍨⍩⍪⍫⍬⍭⍮
+                                           ⍯⍰⍱⍲⍳⍴⍵⍶⍷⍸⍹⍺⎕"))
 
 ;; Some combining characters.
 ;;
@@ -774,7 +790,7 @@
 
 ;; Some ISO8859-1 characters.
 
-(" "         . (" "))
+(" "         . (" "))
 ("!"         . ("¡"))
 ("cent"      . ("¢"))
 ("brokenbar" . ("¦"))
@@ -833,3 +849,130 @@
 ("(x)"  . ,(agda-input-to-string-list "⒳Ⓧⓧ"))
 ("(y)"  . ,(agda-input-to-string-list "⒴Ⓨⓨ"))
 ("(z)"  . ,(agda-input-to-string-list "⒵Ⓩⓩ"))
+
+))
+"A list of translations specific to the Agda input method.
+Each element is a pair (KEY-SEQUENCE-STRING . LIST-OF-TRANSLATION-STRINGS).
+All the translation strings are possible translations
+of the given key sequence; if there is more than one you can choose
+between them using the arrow keys.
+
+Note that if you customize this setting you will not
+automatically benefit (or suffer) from modifications to its
+default value when the library is updated.  If you just want to
+add some bindings it is probably a better idea to customize
+`agda-input-user-translations'.
+
+These translation pairs are included after those in
+`agda-input-user-translations', but before the ones inherited
+from other input methods (see `agda-input-inherit').
+
+If you change this setting manually (without using the
+customization buffer) you need to call `agda-input-setup' in
+order for the change to take effect."
+:group 'agda-input
+:set 'agda-input-incorporate-changed-setting
+:initialize 'custom-initialize-default
+:type '(repeat (cons (string :tag "Key sequence")
+                   (repeat :tag "Translations" string))))
+
+(defcustom agda-input-user-translations nil
+"Like `agda-input-translations', but more suitable for user
+customizations since by default it is empty.
+
+These translation pairs are included first, before those in
+`agda-input-translations' and the ones inherited from other input
+methods."
+:group 'agda-input
+:set 'agda-input-incorporate-changed-setting
+:initialize 'custom-initialize-default
+:type '(repeat (cons (string :tag "Key sequence")
+                   (repeat :tag "Translations" string))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Inspecting and modifying translation maps
+
+(defun agda-input-get-translations (qp)
+"Return a list containing all translations from the Quail
+package QP (except for those corresponding to ASCII).
+Each pair in the list has the form (KEY-SEQUENCE . TRANSLATION)."
+(with-temp-buffer
+(activate-input-method qp) ; To make sure that the package is loaded.
+(unless (quail-package qp)
+  (error "%s is not a Quail package." qp))
+(let ((decode-map (list 'decode-map)))
+  (quail-build-decode-map (list (quail-map)) "" decode-map 0)
+  (cdr decode-map))))
+
+(defun agda-input-show-translations (qp)
+"Display all translations used by the Quail package QP (a string).
+\(Except for those corresponding to ASCII)."
+(interactive (list (read-input-method-name
+                  "Quail input method (default %s): " "Agda")))
+(let ((buf (concat "*" qp " input method translations*")))
+(with-output-to-temp-buffer buf
+  (with-current-buffer buf
+    (quail-insert-decode-map
+     (cons 'decode-map (agda-input-get-translations qp)))))))
+
+(defun agda-input-add-translations (trans)
+"Add the given translations TRANS to the Agda input method.
+TRANS is a list of pairs (KEY-SEQUENCE . TRANSLATION). The
+translations are appended to the current translations."
+(with-temp-buffer
+(dolist (tr (agda-input-concat-map (eval agda-input-tweak-all) trans))
+  (quail-defrule (car tr) (cdr tr) "Agda" t))))
+
+(defun agda-input-inherit-package (qp &optional fun)
+"Let the Agda input method inherit the translations from the
+Quail package QP (except for those corresponding to ASCII).
+
+The optional function FUN can be used to modify the translations.
+It is given a pair (KEY-SEQUENCE . TRANSLATION) and should return
+a list of such pairs."
+(let ((trans (agda-input-get-translations qp)))
+(agda-input-add-translations
+ (if fun (agda-input-concat-map fun trans)
+   trans))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Setting up the input method
+
+(defun agda-input-setup ()
+"Set up the Agda input method based on the customisable
+variables and underlying input methods."
+
+;; Create (or reset) the input method.
+(with-temp-buffer
+(quail-define-package "Agda" "UTF-8" "∏" t ; guidance
+ "Agda input method.
+The purpose of this input method is to edit Agda programs, but
+since it is highly customisable it can be made useful for other
+tasks as well."
+ nil nil nil nil nil nil t ; maximum-shortest
+ ))
+
+(agda-input-add-translations
+(mapcar (lambda (tr) (cons (car tr) (vconcat (cdr tr))))
+       (append agda-input-user-translations
+               agda-input-translations)))
+(dolist (def agda-input-inherit)
+(agda-input-inherit-package (car def)
+                            (eval (cdr def)))))
+
+(defun agda-input-incorporate-changed-setting (sym val)
+"Update the Agda input method based on the customisable
+variables and underlying input methods.
+Suitable for use in the :set field of `defcustom'."
+(set-default sym val)
+(agda-input-setup))
+
+;; Set up the input method.
+
+(agda-input-setup)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Administrative details
+
+(provide 'agda-input)
+;;; agda-input.el ends here
