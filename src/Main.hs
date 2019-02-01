@@ -40,8 +40,10 @@ main = do
     let trie = growTrie sanitaized
     let lookupTable = growLookupTable sanitaized
 
-    BS.writeFile "assets/keymap.ts" (serialize trie)
-    BS.writeFile "assets/query.ts" (serialize (toJSONLookupTable lookupTable))
+    BS.writeFile "out/keymap.ts" (serialize trie)
+    BS.writeFile "out/query.ts" (serialize (toJSONLookupTable lookupTable))
+    BS.writeFile "out/keymap.json" (serializeJSON trie)
+    BS.writeFile "out/query.json" (serializeJSON (toJSONLookupTable lookupTable))
 
 -- reading ".el" files and parse them with the given parser
 readAndParse :: Parser [Translation] -> String -> IO [Translation]
@@ -81,6 +83,9 @@ growTrie = foldr insert emptyTrie
 
 serialize :: ToJSON a => a -> ByteString
 serialize trie = "export default " <> encode trie <> ";"
+
+serializeJSON :: ToJSON a => a -> ByteString
+serializeJSON trie = encode trie
 
 cardinality :: Trie -> Int
 cardinality (Node entries candidates) = length candidates + sum (map cardinality (HashMap.elems entries))
