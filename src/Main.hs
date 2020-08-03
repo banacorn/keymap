@@ -40,10 +40,10 @@ main = do
     let trie = growTrie sanitaized
     let lookupTable = growLookupTable sanitaized
 
-    BS.writeFile "out/keymap.ts" (serialize trie)
-    BS.writeFile "out/query.ts" (serialize (toJSONLookupTable lookupTable))
-    BS.writeFile "out/keymap.json" (serializeJSON trie)
-    BS.writeFile "out/query.json" (serializeJSON (toJSONLookupTable lookupTable))
+    BS.writeFile "output/keymap.ts" (serialize trie)
+    BS.writeFile "output/query.ts" (serialize (toJSONLookupTable lookupTable))
+    BS.writeFile "output/keymap.json" (serializeJSON trie)
+    BS.writeFile "output/query.json" (serializeJSON (toJSONLookupTable lookupTable))
 
 -- reading ".el" files and parse them with the given parser
 readAndParse :: Parser [Translation] -> String -> IO [Translation]
