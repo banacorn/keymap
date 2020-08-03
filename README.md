@@ -14,13 +14,12 @@ The mappings are currently drawn from two sources (in order):
 
 ## Output
 
-1. [keymap.ts](https://github.com/banacorn/keymap/blob/master/assets/keymap.ts): The generated keymap trie
-
-2. [query.ts](https://github.com/banacorn/keymap/blob/master/assets/query.ts):  The lookup table for input sequence
+1. [keymap.json](https://github.com/banacorn/keymap/blob/master/output/keymap.json): The generated keymap trie
+2. [query.json](https://github.com/banacorn/keymap/blob/master/output/query.json):  The lookup table for input sequence
 
 ## How to generate keymaps
 
 ```
 stack build
-stack exec generator
+stack exec generate
 ```

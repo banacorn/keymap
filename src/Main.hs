@@ -17,6 +17,21 @@ import              Data.Aeson.Types (Pair)
 import              Data.Monoid ((<>))
 import              Data.Attoparsec.Text
 
+
+main :: IO ()
+main = do
+    -- keymaps drawn from two different sources
+    agdaInput       <- readAndParse parseAgdaInput "agda-input.el"
+    tex             <- readAndParse parseTex "latin-ltx.el"
+    alphaNumeric    <- readAndParse parseExtension "alpha-numeric.ext"
+
+    let sanitaized  = map sanitizeGlyph (agdaInput ++ tex ++ alphaNumeric)
+    let trie        = growTrie sanitaized
+    let lookupTable = growLookupTable sanitaized
+
+    BS.writeFile "output/keymap.json" (encode trie)
+    BS.writeFile "output/query.json" (encode (toJSONLookupTable lookupTable))
+
 sanitizeGlyph :: Translation -> Translation
 sanitizeGlyph (Translation code glyphs)
     = Translation code (map (Text.map escape) glyphs)
@@ -27,23 +42,6 @@ sanitizeGlyph (Translation code glyphs)
         -- U+2029 paragraph separator (HTML &#8233; · PSEP)
         escape '\8233' = '\n'
         escape others = others
-
-
-main :: IO ()
-main = do
-    -- keymaps drawn from two different sources
-    agdaInput <- readAndParse parseAgdaInput "agda-input.el"
-    tex <- readAndParse parseTex "latin-ltx.el"
-    alphaNumeric <- readAndParse parseExtension "alpha-numeric.ext"
-
-    let sanitaized = map sanitizeGlyph (agdaInput ++ tex ++ alphaNumeric)
-    let trie = growTrie sanitaized
-    let lookupTable = growLookupTable sanitaized
-
-    BS.writeFile "output/keymap.ts" (serialize trie)
-    BS.writeFile "output/query.ts" (serialize (toJSONLookupTable lookupTable))
-    BS.writeFile "output/keymap.json" (serializeJSON trie)
-    BS.writeFile "output/query.json" (serializeJSON (toJSONLookupTable lookupTable))
 
 -- reading ".el" files and parse them with the given parser
 readAndParse :: Parser [Translation] -> String -> IO [Translation]
@@ -81,28 +79,11 @@ growTrie = foldr insert emptyTrie
         emptyTrie :: Trie
         emptyTrie = Node HashMap.empty []
 
-serialize :: ToJSON a => a -> ByteString
-serialize trie = "export default " <> encode trie <> ";"
-
-serializeJSON :: ToJSON a => a -> ByteString
-serializeJSON trie = encode trie
-
 cardinality :: Trie -> Int
 cardinality (Node entries candidates) = length candidates + sum (map cardinality (HashMap.elems entries))
 
 elems :: Trie -> [Text]
 elems (Node entries candidates) = nub $ concat (candidates : map elems (HashMap.elems entries))
-
---------------------------------------------------------------------------------
--- Trie
---------------------------------------------------------------------------------
-
-fetchLegacyTrie :: IO Trie
-fetchLegacyTrie = do
-    raw <- BS.init . BS.init . BS.drop 15 <$> (BS.readFile "assets/legacy.ts")
-    case (decode raw :: Maybe Trie) of
-        Nothing -> error "failed"
-        Just trie -> return trie
 
 --------------------------------------------------------------------------------
 -- Unicode => Input Sequence
