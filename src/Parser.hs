@@ -50,9 +50,9 @@ parseTexCode = do
                         rest <- ingoreEscaped
                         return $ Text.singleton others <> rest
         removeSurroundingMoneySign :: Text -> Text
-        removeSurroundingMoneySign raw = if (Text.head raw == '$' && Text.last raw == '$')
+        removeSurroundingMoneySign raw = if Text.head raw == '$' && Text.last raw == '$'
             then let trimmed = Text.init (Text.tail raw) in
-                if (Text.head trimmed == '\\')
+                if Text.head trimmed == '\\'
                     then Text.tail trimmed
                     else trimmed
             else raw
@@ -61,11 +61,8 @@ parseTexGlyph :: Parser Text
 parseTexGlyph = do
     glyph <- Atto.take 1
     if Text.unpack glyph == "\\"
-        then do
-            escaped <- Atto.take 1
-            return escaped
-        else
-            return glyph
+        then Atto.take 1
+        else return glyph
 
 
 parseTexTranslation :: Parser Translation
@@ -160,7 +157,6 @@ parseObject = do
     return $ Node
         (HashMap.fromList (rights pairs))
         (concat $ lefts pairs)
-    where
 
 --------------------------------------------------------------------------------
 -- Extensions

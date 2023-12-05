@@ -16,6 +16,7 @@ import              Data.Aeson
 import              Data.Aeson.Types (Pair)
 import              Data.Monoid ((<>))
 import              Data.Attoparsec.Text
+import qualified Data.String as String
 
 
 main :: IO ()
@@ -72,12 +73,12 @@ growTrie = foldr insert emptyTrie
         insert (Translation (x:xs) glyphs) (Node entries candidates) = Node entries' candidates
             where
                 entries' :: HashMap Text Trie
-                entries' = case HashMap.lookup (Text.singleton x) entries of
-                    Just trie -> HashMap.insert (Text.singleton x) (insert (Translation xs glyphs) trie) entries
-                    Nothing -> HashMap.insert (Text.singleton x) (insert (Translation xs glyphs) emptyTrie) entries
+                entries' = case HashMap.lookup (String.fromString [x]) entries of
+                    Just trie -> HashMap.insert (String.fromString [x]) (insert (Translation xs glyphs) trie) entries
+                    Nothing -> HashMap.insert (String.fromString [x]) (insert (Translation xs glyphs) emptyTrie) entries
 
         emptyTrie :: Trie
-        emptyTrie = Node HashMap.empty []
+        emptyTrie = Node mempty []
 
 cardinality :: Trie -> Int
 cardinality (Node entries candidates) = length candidates + sum (map cardinality (HashMap.elems entries))
@@ -93,7 +94,7 @@ growLookupTable :: [Translation] -> LookupTable
 growLookupTable xs = foldr insert IntMap.empty $ xs >>= toEntries
     where
         insert :: Entry -> LookupTable -> LookupTable
-        insert (cp, codes) old = IntMap.insertWith (++) cp codes old
+        insert (cp, codes) = IntMap.insertWith (++) cp codes
 
         toEntries :: Translation -> [Entry]
         toEntries (Translation code glyphs) = map (\g -> (toCodePoint g, [code])) glyphs
@@ -105,4 +106,4 @@ toJSONLookupTable :: LookupTable -> Value
 toJSONLookupTable = object . map fromEntry . IntMap.toList
     where
         fromEntry :: Entry -> Pair
-        fromEntry (cp, codes) = (Text.pack (show cp), toJSON codes)
+        fromEntry (cp, codes) = (String.fromString (show cp), toJSON codes)
