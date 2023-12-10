@@ -18,7 +18,7 @@ import Types
 --------------------------------------------------------------------------------
 
 parseTex :: Parser [Translation]
-parseTex = parseTexTranslation `sepBy1` skipGarbage
+parseTex = many1 $ parseTexTranslation <* skipGarbage
 
 parseTexCode :: Parser Text
 parseTexCode = do
@@ -65,7 +65,7 @@ parseTexTranslation = do
 --------------------------------------------------------------------------------
 
 parseAgdaInput :: Parser [Translation]
-parseAgdaInput = parseTranslation `sepBy1` skipGarbage
+parseAgdaInput = many1 $ parseTranslation <* skipGarbage
 
 parseTranslation :: Parser Translation
 parseTranslation = do
