@@ -48,7 +48,7 @@ sanitizeGlyph (Translation code glyphs) =
 readAndParse :: Parser [Translation] -> String -> IO [Translation]
 readAndParse parser path = do
   raw <- readFile $ "assets/" <> path
-  case parseOnly parser (Text.pack raw) of
+  case parseOnly (parser <* endOfInput) (Text.pack raw) of
     Left err -> do
       print err
       return []
@@ -58,7 +58,7 @@ readAndParse parser path = do
 test :: Parser [Translation] -> String -> IO ()
 test parser path = do
   raw <- readFile $ "assets/" <> path <> ".el"
-  parseTest parser (Text.pack raw)
+  parseTest (parser <* endOfInput) (Text.pack raw)
   return ()
 
 --------------------------------------------------------------------------------

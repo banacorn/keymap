@@ -18,7 +18,7 @@ import Types
 --------------------------------------------------------------------------------
 
 parseTex :: Parser [Translation]
-parseTex = parseTexTranslation `sepBy1` skipGarbage
+parseTex = many1 $ parseTexTranslation <* skipGarbage
 
 parseTexCode :: Parser Text
 parseTexCode = do
@@ -27,29 +27,12 @@ parseTexCode = do
     choice
       [ do
           string "\\\\"
-          ingoreEscaped,
-        ingoreEscaped
+          ignoreEscaped,
+        ignoreEscaped
       ]
   char '\"'
   return $ removeSurroundingMoneySign result
   where
-    ingoreEscaped :: Parser Text
-    ingoreEscaped = do
-      next <- peekChar
-      case next of
-        Nothing -> return ""
-        Just peeked -> case peeked of
-          '\"' -> return "" -- ends everything
-          '\\' -> do
-            -- escape the next
-            char '\\'
-            escaped <- Atto.take 1
-            rest <- ingoreEscaped
-            return $ escaped <> rest
-          others -> do
-            _ <- anyChar
-            rest <- ingoreEscaped
-            return $ Text.singleton others <> rest
     removeSurroundingMoneySign :: Text -> Text
     removeSurroundingMoneySign raw =
       if Text.head raw == '$' && Text.last raw == '$'
@@ -82,7 +65,7 @@ parseTexTranslation = do
 --------------------------------------------------------------------------------
 
 parseAgdaInput :: Parser [Translation]
-parseAgdaInput = parseTranslation `sepBy1` skipGarbage
+parseAgdaInput = many1 $ parseTranslation <* skipGarbage
 
 parseTranslation :: Parser Translation
 parseTranslation = do
@@ -102,7 +85,7 @@ parseTranslation = do
 parseCode :: Parser Text
 parseCode = do
   char '\"'
-  result <- takeTill ('\"' ==)
+  result <- ignoreEscaped
   char '\"'
   return result
 
@@ -114,7 +97,7 @@ parseGlyphs = do
       ( choice
           [ do
               char '\"'
-              result <- takeTill ('\"' ==)
+              result <- ignoreEscaped
               char '\"'
               return (Text.words result >>= Text.group),
             do
@@ -202,3 +185,21 @@ skipGarbage =
         void $ char '\t',
         void $ many1 (char ' ')
       ]
+
+ignoreEscaped :: Parser Text
+ignoreEscaped = do
+  next <- peekChar
+  case next of
+    Nothing -> return ""
+    Just peeked -> case peeked of
+      '\"' -> return "" -- ends everything
+      '\\' -> do
+        -- escape the next
+        char '\\'
+        escaped <- Atto.take 1
+        rest <- ignoreEscaped
+        return $ escaped <> rest
+      others -> do
+        _ <- anyChar
+        rest <- ignoreEscaped
+        return $ Text.singleton others <> rest
